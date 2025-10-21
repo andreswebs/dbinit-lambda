@@ -13,12 +13,12 @@ const dbAppSecretID = process.env.DB_APP_SECRET;
 const adminDBName = process.env.DB_ADMIN_DB || 'postgres';
 const dbOwnerRoleName = process.env.DB_OWNER_ROLE || 'postgres';
 const dbMigrationRoleName = process.env.DB_MIGRATION_ROLE || 'mig_grp';
-const dbAppRoleName = process.env.DB_APP_ROLE || 'app_grp';
 const dbSchemaName = process.env.DB_SCHEMA || 'public';
 
 // https://docs.aws.amazon.com/lambda/latest/dg/services-rds.html
 const caBundleFile = process.env.DB_CA_BUNDLE_FILE || 'rds-ca-global-bundle.pem';
 
+let dbAppRoleName: string | undefined = process.env.DB_APP_ROLE || 'app_grp';
 let smClient: SecretsManagerClient;
 let masterCredentials: Credentials;
 let dbMigrationSecret: DBSecretStrict;
@@ -33,7 +33,7 @@ async function init() {
   }
 
   if (!dbAppSecretID) {
-    throw new Error('error: env var DB_APP_SECRET must not be empty');
+    dbAppRoleName = undefined;
   }
 
   if (!smClient) {
@@ -44,7 +44,7 @@ async function init() {
     dbMigrationSecret = await getDBSecret(smClient, dbMigrationSecretID);
   }
 
-  if (!dbAppSecret) {
+  if (!dbAppSecret && dbAppSecretID) {
     dbAppSecret = await getDBSecret(smClient, dbAppSecretID);
   }
 
@@ -53,10 +53,11 @@ async function init() {
   }
 
   if (
-    dbAppSecret.host !== dbMigrationSecret.host ||
-    dbAppSecret.port !== dbMigrationSecret.port ||
-    dbAppSecret.engine !== dbMigrationSecret.engine ||
-    dbAppSecret.masterarn !== dbMigrationSecret.masterarn
+    dbAppSecret &&
+    (dbAppSecret.host !== dbMigrationSecret.host ||
+      dbAppSecret.port !== dbMigrationSecret.port ||
+      dbAppSecret.engine !== dbMigrationSecret.engine ||
+      dbAppSecret.masterarn !== dbMigrationSecret.masterarn)
   ) {
     throw new Error('error: app secret does not match migration secret');
   }
@@ -129,7 +130,7 @@ async function handler() {
     password: migrationPassword,
   } = dbMigrationSecret;
 
-  const { username: appUser, password: appPassword } = dbAppSecret;
+  const { username: appUser, password: appPassword } = dbAppSecret ?? {};
 
   const dbConfig: DBConfig = {
     dbName,
