@@ -1,0 +1,110 @@
+DO $$ BEGIN
+
+REVOKE ALL ON DATABASE {{ config.dbName }} FROM PUBLIC;
+
+CREATE SCHEMA IF NOT EXISTS {{ config.dbSchema }};
+REVOKE CREATE ON SCHEMA {{ config.dbSchema }} FROM PUBLIC;
+
+{%if config.dbSchema != 'public' -%}
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+
+ALTER DATABASE {{ config.dbName }} SET search_path TO {{ config.dbSchema }}, public;
+{%- endif %}
+
+IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{{ config.migrationRole }}') THEN
+  CREATE ROLE {{ config.migrationRole }} WITH NOLOGIN;
+END IF;
+
+IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{{ config.migrationUser }}') THEN
+  CREATE ROLE {{ config.migrationUser }} WITH LOGIN PASSWORD '{{ config.migrationPassword }}';
+END IF;
+
+{% if config.appRole -%}
+IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{{ config.appRole }}') THEN
+  CREATE ROLE {{ config.appRole }} WITH NOLOGIN;
+END IF;
+{%- endif %}
+
+{% if config.appUser and config.appPassword -%}
+IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '{{ config.appUser }}') THEN
+  CREATE ROLE {{ config.appUser }} WITH LOGIN PASSWORD '{{ config.appPassword }}';
+END IF;
+{%- endif %}
+
+GRANT CONNECT, TEMPORARY ON DATABASE {{ config.dbName }} TO {{ config.migrationRole }}{%- if config.appRole -%}, {{ config.appRole }}{%- endif -%};
+
+GRANT CREATE ON DATABASE {{ config.dbName }} TO {{ config.migrationRole }};
+GRANT USAGE, CREATE ON SCHEMA {{ config.dbSchema }} to {{ config.migrationRole }};
+
+GRANT ALL ON ALL TABLES IN SCHEMA {{ config.dbSchema }} TO {{ config.migrationRole }};
+GRANT ALL ON ALL SEQUENCES IN SCHEMA {{ config.dbSchema }} TO {{ config.migrationRole }};
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA {{ config.dbSchema }} TO {{ config.migrationRole }};
+
+GRANT {{ config.migrationRole }} to {{ config.migrationUser }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
+GRANT ALL ON TABLES TO {{ config.migrationUser }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
+GRANT ALL ON SEQUENCES TO {{ config.migrationUser }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
+GRANT ALL ON FUNCTIONS TO {{ config.migrationUser }};
+
+{% if config.appRole -%}
+GRANT USAGE ON SCHEMA {{ config.dbSchema }} TO {{ config.appRole }};
+
+GRANT SELECT ON ALL TABLES IN SCHEMA {{ config.dbSchema }} TO {{ config.appRole }};
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA {{ config.dbSchema }} TO {{ config.appRole }};
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA {{ config.dbSchema }} TO {{ config.appRole }};
+
+GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {{ config.dbSchema }} TO {{ config.appRole }};
+GRANT UPDATE ON ALL SEQUENCES IN SCHEMA {{ config.dbSchema }} TO {{ config.appRole }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {{ config.appRole }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
+GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO {{ config.appRole }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
+GRANT EXECUTE ON FUNCTIONS TO {{ config.appRole }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationUser }} IN SCHEMA {{ config.dbSchema }}
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {{ config.appRole }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationUser }} IN SCHEMA {{ config.dbSchema }}
+GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO {{ config.appRole }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationUser }} IN SCHEMA {{ config.dbSchema }}
+GRANT EXECUTE ON FUNCTIONS TO {{ config.appRole }};
+{%- endif %}
+
+{% if config.appRole and config.appUser and config.appPassword -%}
+GRANT {{ config.appRole }} to {{ config.appUser }};
+{%- endif %}
+
+{% if config.appUser and config.appPassword -%}
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {{ config.appUser }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
+GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO {{ config.appUser }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
+GRANT EXECUTE ON FUNCTIONS TO {{ config.appUser }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationUser }} IN SCHEMA {{ config.dbSchema }}
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO {{ config.appUser }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationUser }} IN SCHEMA {{ config.dbSchema }}
+GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO {{ config.appUser }};
+
+ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationUser }} IN SCHEMA {{ config.dbSchema }}
+GRANT EXECUTE ON FUNCTIONS TO {{ config.appUser }};
+{%- endif %}
+
+GRANT {{ config.migrationRole }} to {{ config.ownerRole }};
+GRANT {{ config.migrationUser }} to {{ config.ownerRole }};
+
+END $$;

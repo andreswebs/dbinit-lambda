@@ -1,0 +1,4 @@
+{
+  "[typescript]": { "editor.formatOnSave": true },
+  "deno.enable": false
+}
