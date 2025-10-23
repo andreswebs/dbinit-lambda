@@ -5,6 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "module": "true",
   "scripts": {
     "build": "rm -rf ./dist/* && tsc --project tsconfig.build.json",
     "lint": "eslint .",
@@ -15,7 +16,7 @@
     "local": "npm run build && LOCAL_RUN=1 node dist/index.js"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.913.0",
+    "@aws-sdk/client-secrets-manager": "^3.914.0",
     "nunjucks": "^3.2.4",
     "pg": "^8.16.3",
     "typia": "^9.7.2",
@@ -24,7 +25,7 @@
   "devDependencies": {
     "@eslint/js": "^9.38.0",
     "@types/aws-lambda": "^8.10.156",
-    "@types/node": "^24.8.1",
+    "@types/node": "^24.9.1",
     "@types/nunjucks": "^3.2.6",
     "@types/pg": "^8.15.5",
     "eslint": "^9.38.0",
@@ -33,6 +34,6 @@
     "globals": "^16.4.0",
     "prettier": "^3.6.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.1"
+    "typescript-eslint": "^8.46.2"
   }
 }
