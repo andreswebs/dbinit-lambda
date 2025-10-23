@@ -16,6 +16,7 @@ RUN npm clean-install --audit=false --fund=false --loglevel=error --omit=dev
 
 FROM base AS runtime
 WORKDIR "${LAMBDA_TASK_ROOT}"
+COPY package.json ./
 COPY --from=deps /deps/node_modules ./node_modules
 COPY --from=build /build/dist/* ./
 COPY rds-ca-global-bundle.pem ./
