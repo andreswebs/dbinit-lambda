@@ -41,6 +41,8 @@ GRANT ALL ON ALL SEQUENCES IN SCHEMA {{ config.dbSchema }} TO {{ config.migratio
 GRANT ALL ON ALL FUNCTIONS IN SCHEMA {{ config.dbSchema }} TO {{ config.migrationRole }};
 
 GRANT {{ config.migrationRole }} to {{ config.migrationUser }};
+GRANT {{ config.migrationRole }} to {{ config.ownerRole }};
+GRANT {{ config.migrationUser }} to {{ config.ownerRole }};
 
 ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationRole }} IN SCHEMA {{ config.dbSchema }}
 GRANT ALL ON TABLES TO {{ config.migrationUser }};

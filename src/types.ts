@@ -21,6 +21,7 @@ export type DBSecretStrict = Omit<DBSecret, 'port'> & {
 export type DBConfig = {
   dbName: string;
   dbSchema: string;
+  ownerRole: string;
   migrationRole: string;
   migrationUser: string;
   migrationPassword: string;

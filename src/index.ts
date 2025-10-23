@@ -11,6 +11,7 @@ const localRun = process.env.LOCAL_RUN;
 const dbMigrationSecretID = process.env.DB_MIGRATION_SECRET;
 const dbAppSecretID = process.env.DB_APP_SECRET;
 const adminDBName = process.env.DB_ADMIN_DB || 'postgres';
+const dbOwnerRoleName = process.env.DB_OWNER_ROLE || 'postgres';
 const dbMigrationRoleName = process.env.DB_MIGRATION_ROLE || 'mig_grp';
 const dbSchemaName = process.env.DB_SCHEMA || 'public';
 
@@ -134,6 +135,7 @@ async function handler() {
   const dbConfig: DBConfig = {
     dbName,
     dbSchema: dbSchemaName,
+    ownerRole: dbOwnerRoleName,
     migrationRole: dbMigrationRoleName,
     migrationUser,
     migrationPassword,
