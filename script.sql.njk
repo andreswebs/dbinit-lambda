@@ -104,7 +104,4 @@ ALTER DEFAULT PRIVILEGES FOR ROLE {{ config.migrationUser }} IN SCHEMA {{ config
 GRANT EXECUTE ON FUNCTIONS TO {{ config.appUser }};
 {%- endif %}
 
-GRANT {{ config.migrationRole }} to {{ config.ownerRole }};
-GRANT {{ config.migrationUser }} to {{ config.ownerRole }};
-
 END $$;
